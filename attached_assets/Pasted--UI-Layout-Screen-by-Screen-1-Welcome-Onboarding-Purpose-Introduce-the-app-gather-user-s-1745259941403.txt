@@ -1,0 +1,141 @@
+🎨 UI Layout (Screen-by-Screen)
+🟦 1. Welcome / Onboarding
+Purpose: Introduce the app, gather user's name, and basic info.
+
+UI Elements:
+
+Welcome message
+
+Emotional Intelligence quote or animation
+
+Sign Up / Log In (Google, Email, Apple)
+
+Optional EI Self-Assessment intro
+
+🟨 2. Home Dashboard
+Purpose: Central hub for user activity
+
+UI Elements:
+
+Greeting ("Good Morning, Sarah 👋")
+
+Mood Tracker Quick Access
+
+Daily Tip or Challenge Card
+
+Quick Links to: AI Mentor, Assessments, Journal, Progress
+
+🟧 3. AI Emotional Mentor (Chatbot)
+Purpose: Conversation-style EI guide
+
+UI Elements:
+
+Chat interface
+
+Suggestions: “I'm feeling anxious”, “Teach me empathy”, etc.
+
+Voice-to-text option
+
+Responses based on user’s mood or history
+
+🟩 4. Mood & Journal Tracker
+Purpose: Let users reflect and log emotional states
+
+UI Elements:
+
+Emoji Mood Picker (Happy, Sad, Anxious, Angry, etc.)
+
+Text area for journaling
+
+Tags (e.g., “School Stress”, “Family”, “Work”)
+
+Timeline graph of emotional trends
+
+🟫 5. EI Self-Assessment
+Purpose: Gauge current EI levels
+
+UI Elements:
+
+Quiz-style interface (sliders, multiple choice)
+
+Sections based on: Self-awareness, Self-regulation, Motivation, Empathy, Social Skills
+
+Score breakdown with suggestions
+
+🟪 6. Learning Hub
+Purpose: Content consumption
+
+UI Elements:
+
+Tabs: Videos, Articles, Podcasts, Exercises
+
+Recommended for You
+
+“Save for Later” feature
+
+🟥 7. Progress & Goals
+Purpose: Track growth over time
+
+UI Elements:
+
+EI Progress Radar Chart
+
+Completed Challenges
+
+Goal tracker (e.g., “Improve active listening by 20%”)
+
+🧱 Backend Structure (with Firebase)
+We’ll use Firebase for easy integration and scalability.
+
+🔐 1. Authentication
+Tool: Firebase Auth
+
+Supports Google, Apple, Email/Password
+
+Store user UID for linking data
+
+📁 2. Firestore Database Structure
+plaintext
+Copy
+Edit
+users (collection)
+  └── userId (document)
+        ├── name: "Sarah"
+        ├── email: "sarah@example.com"
+        ├── joined: timestamp
+        ├── mood_entries (subcollection)
+        │     └── entryId
+        │           ├── mood: "happy"
+        │           ├── date: timestamp
+        │           └── note: "Had a great class today!"
+        ├── journal_entries (subcollection)
+        ├── assessments (subcollection)
+        ├── chatbot_history (subcollection)
+        └── goals
+              ├── empathy: 75
+              └── self_awareness: 62
+
+learning_content (collection)
+  └── contentId (document)
+        ├── type: "video"
+        ├── category: "Self-Regulation"
+        ├── url: "https://..."
+        ├── title: "Managing Emotions in Stressful Times"
+🤖 3. AI Chatbot Integration
+Use OpenAI API (for GPT-based responses) or Dialogflow CX
+
+Store chat history in chatbot_history subcollection
+
+Tailor prompts using:
+
+Current mood
+
+Past logs
+
+Assessment results
+
+📈 4. Analytics & Notifications
+Firebase Analytics: Track feature usage, mood trends, etc.
+
+Firebase Cloud Messaging (FCM): Push reminders for daily check-ins, new content
+
