@@ -15,11 +15,14 @@ import {
   type Challenge,
   type InsertChallenge
 } from "@shared/schema";
-import createMemoryStore from "memorystore";
 import session from "express-session";
+import connectPg from "connect-pg-simple";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
+import { pool } from "./db";
 
-// Create memory store for sessions
-const MemoryStore = createMemoryStore(session);
+// Create PostgreSQL session store
+const PostgresSessionStore = connectPg(session);
 
 export interface IStorage {
   // User methods
@@ -47,100 +50,98 @@ export interface IStorage {
   sessionStore: session.SessionStore;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private moodEntries: Map<string, MoodEntry>;
-  private journalEntries: Map<string, JournalEntry>;
-  private assessmentResults: Map<string, AssessmentResult>;
-  private challenges: Map<string, Challenge>;
+export class DatabaseStorage implements IStorage {
   sessionStore: session.SessionStore;
-  currentId: number;
 
   constructor() {
-    this.users = new Map();
-    this.moodEntries = new Map();
-    this.journalEntries = new Map();
-    this.assessmentResults = new Map();
-    this.challenges = new Map();
-    this.currentId = 1;
-    this.sessionStore = new MemoryStore({
-      checkPeriod: 86400000, // Prune expired entries every 24 hours
+    this.sessionStore = new PostgresSessionStore({ 
+      pool, 
+      createTableIfMissing: true 
     });
   }
 
   // User methods
   async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.currentId++;
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
     return user;
   }
 
   // Mood entries methods
   async createMoodEntry(entry: InsertMoodEntry): Promise<MoodEntry> {
-    const id = Date.now().toString();
-    const moodEntry: MoodEntry = { ...entry, id };
-    this.moodEntries.set(id, moodEntry);
+    const [moodEntry] = await db
+      .insert(moodEntries)
+      .values({ ...entry, id: Date.now().toString() })
+      .returning();
     return moodEntry;
   }
 
   async getMoodEntriesByUserId(userId: number): Promise<MoodEntry[]> {
-    return Array.from(this.moodEntries.values()).filter(
-      (entry) => entry.userId === userId
-    );
+    return await db
+      .select()
+      .from(moodEntries)
+      .where(eq(moodEntries.userId, userId));
   }
 
   // Journal entries methods
   async createJournalEntry(entry: InsertJournalEntry): Promise<JournalEntry> {
-    const id = Date.now().toString();
-    const journalEntry: JournalEntry = { ...entry, id };
-    this.journalEntries.set(id, journalEntry);
+    const [journalEntry] = await db
+      .insert(journalEntries)
+      .values({ ...entry, id: Date.now().toString() })
+      .returning();
     return journalEntry;
   }
 
   async getJournalEntriesByUserId(userId: number): Promise<JournalEntry[]> {
-    return Array.from(this.journalEntries.values()).filter(
-      (entry) => entry.userId === userId
-    );
+    return await db
+      .select()
+      .from(journalEntries)
+      .where(eq(journalEntries.userId, userId));
   }
 
   // Assessment results methods
   async createAssessmentResult(result: InsertAssessmentResult): Promise<AssessmentResult> {
-    const id = Date.now().toString();
-    const assessmentResult: AssessmentResult = { ...result, id };
-    this.assessmentResults.set(id, assessmentResult);
+    const [assessmentResult] = await db
+      .insert(assessmentResults)
+      .values({ ...result, id: Date.now().toString() })
+      .returning();
     return assessmentResult;
   }
 
   async getAssessmentResultsByUserId(userId: number): Promise<AssessmentResult[]> {
-    return Array.from(this.assessmentResults.values()).filter(
-      (result) => result.userId === userId
-    );
+    return await db
+      .select()
+      .from(assessmentResults)
+      .where(eq(assessmentResults.userId, userId));
   }
 
   // Challenges methods
   async createChallenge(challenge: InsertChallenge): Promise<Challenge> {
-    const id = Date.now().toString();
-    const newChallenge: Challenge = { ...challenge, id };
-    this.challenges.set(id, newChallenge);
+    const [newChallenge] = await db
+      .insert(challenges)
+      .values({ ...challenge, id: Date.now().toString() })
+      .returning();
     return newChallenge;
   }
 
   async getChallengesByUserId(userId: number): Promise<Challenge[]> {
-    return Array.from(this.challenges.values()).filter(
-      (challenge) => challenge.userId === userId
-    );
+    return await db
+      .select()
+      .from(challenges)
+      .where(eq(challenges.userId, userId));
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
